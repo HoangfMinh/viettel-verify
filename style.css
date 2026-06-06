@@ -1,0 +1,111 @@
+:root {
+    --viettel-red: #EE0434;
+    --viettel-red-dark: #C4012A;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--viettel-red) 0%, var(--viettel-red-dark) 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+.container { max-width: 550px; margin: 0 auto; }
+.card {
+    background: white;
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.logo { text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
+.logo .logo-icon { font-size: 50px; color: #EE0434; }
+.logo h1 { color: var(--viettel-red); font-size: 28px; }
+.logo p { color: #666; font-size: 13px; }
+.badge { background: #e8f4f8; padding: 10px; border-radius: 12px; text-align: center; font-size: 13px; margin-bottom: 20px; }
+.form-group { margin-bottom: 20px; }
+label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; font-size: 14px; }
+input, select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.3s;
+}
+input:focus { outline: none; border-color: var(--viettel-red); box-shadow: 0 0 0 3px rgba(238,4,52,0.1); }
+input.valid { border-color: #28a745; background: #f0fff0; }
+input.invalid { border-color: #dc3545; background: #fff0f0; }
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+}
+.upload-area:hover { border-color: var(--viettel-red); background: #fff5f5; }
+.upload-area.has-image div, .upload-area.has-image p, .upload-area.has-image small { display: none !important; }
+.preview-img { max-width: 100%; max-height: 150px; margin-top: 10px; border-radius: 8px; display: none; }
+.upload-area.has-image .preview-img { display: block !important; }
+.remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(220,53,69,0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: none;
+    z-index: 10;
+}
+.upload-area.has-image .remove-btn { display: block; }
+button {
+    width: 100%;
+    padding: 14px;
+    background: var(--viettel-red);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+button:hover { background: var(--viettel-red-dark); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(238,4,52,0.3); }
+button:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+.message { margin-top: 20px; padding: 12px; border-radius: 12px; display: none; }
+.message.success { background: #d4edda; color: #155724; display: block; }
+.message.error { background: #f8d7da; color: #721c24; display: block; }
+.phone-status { font-size: 12px; margin-top: 5px; }
+.phone-status.valid { color: #28a745; }
+.phone-status.invalid { color: #dc3545; }
+hr { margin: 20px 0; border: none; border-top: 1px solid #eee; }
+.footer { text-align: center; font-size: 12px; color: #999; }
+.footer a { color: var(--viettel-red); text-decoration: none; }
+@media (max-width: 480px) { .card { padding: 20px; } }
+/* Logo ảnh */
+.logo-img {
+    height: 60px;
+    margin-bottom: 10px;
+    object-fit: contain;
+}
+
+@media (max-width: 480px) {
+    .logo-img {
+        height: 45px;
+    }
+}
+
+/* Admin header logo */
+.admin-header h1 {
+    display: flex;
+    align-items: center;
+}

